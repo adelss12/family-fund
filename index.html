@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>صندوق العائلة الذكي</title>
+  
+  <!-- الخط الرسمي الموحد: IBM Plex Sans Arabic -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #153e32;
+      --primary-dark: #0d271f;
+      --gold: #b38538;
+      --gold-dark: #936821;
+      --bg: #f8f6f0;
+      --card: #ffffff;
+      --ink: #1b2620;
+      --ink-muted: #5e6b64;
+      --border: #e2dbcc;
+      --success: #1f8b4c;
+      --success-bg: #eafaf1;
+      --danger: #c0392b;
+      --danger-bg: #fdeeed;
+      --warning-bg: #fef7e7;
+      --warning: #b78103;
+      --radius: 14px;
+      --shadow: 0 4px 14px rgba(21, 62, 50, 0.05);
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent; 
+      font-family: 'IBM Plex Sans Arabic', sans-serif !important; 
+    }
+
+    body { 
+      background: var(--bg); 
+      color: var(--ink); 
+      padding-bottom: 75px; 
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* عزل الخلفية وقفل حركتها نهائياً عند فتح النوافذ */
+    body.modal-open {
+      overflow: hidden !important;
+      position: fixed !important;
+      width: 100% !important;
+      height: 100% !important;
+      touch-action: none !important;
+    }
+
+    /* رمز الريال السعودي الجديد كأيقونة رسمية متناسقة */
+    .riyal-sym {
+      display: inline-flex;
+      align-items: center;
+      vertical-align: -0.15em;
+      width: 1.1em;
+      height: 1.1em;
+      fill: currentColor;
+      margin-right: 3px;
+    }
+
+    .mobile-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--primary); color: #fff;
+      padding: 13px 16px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    }
+    .mobile-header h1 { font-size: 18px; font-weight: 700; color: #fff; margin: 0; }
+    .mobile-header .subtitle { font-size: 11px; color: var(--gold); display: block; font-weight: 500; }
+    
+    .header-actions { display: flex; gap: 8px; }
+    .btn-smart-pay {
+      background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; border: none; padding: 7px 12px;
+      border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
+    .btn-quick-pay {
+      background: var(--gold); color: #fff; border: none; padding: 7px 12px;
+      border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+      background: #ffffff; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+      box-shadow: 0 -3px 15px rgba(0,0,0,0.06);
+    }
+    .nav-btn {
+      background: none; border: none; display: flex; flex-direction: column; align-items: center;
+      gap: 3px; color: var(--ink-muted); font-size: 11px; font-weight: 500; cursor: pointer; flex: 1;
+    }
+    .nav-btn .icon { font-size: 19px; line-height: 1; }
+    .nav-btn.active { color: var(--primary); font-weight: 700; }
+    .nav-btn.active .icon { transform: scale(1.1); transition: 0.15s; }
+
+    .container { padding: 16px; max-width: 800px; margin: auto; }
+
+    .finance-overview {
+      background: linear-gradient(135deg, var(--primary) 0%, #0d271f 100%);
+      color: #fff; border-radius: var(--radius); padding: 18px 20px; margin-bottom: 18px;
+      box-shadow: 0 6px 18px rgba(21, 62, 50, 0.18); position: relative; overflow: hidden;
+    }
+    .overview-title { font-size: 12.5px; color: rgba(255,255,255,0.8); font-weight: 400; }
+    .overview-balance { font-size: 30px; font-weight: 700; color: #fff; margin: 4px 0 14px; }
+    .overview-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px solid rgba(255,255,255,0.12); padding-top: 12px; }
+    .overview-stat-item div:first-child { font-size: 11.5px; color: rgba(255,255,255,0.7); }
+    .overview-stat-item div:last-child { font-size: 15px; font-weight: 700; color: #fff; margin-top: 2px; }
+
+    .item-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .card-row { display: flex; justify-content: space-between; align-items: center; }
+    .card-title { font-weight: 700; font-size: 14.5px; color: var(--ink); }
+    .card-amount { font-weight: 700; font-size: 15px; }
+    .card-sub { font-size: 12px; color: var(--ink-muted); }
+
+    .badge {
+      display: inline-block; padding: 4px 9px; border-radius: 12px;
+      font-size: 11.5px; font-weight: 600; line-height: 1;
+    }
+    .badge.paid { background: var(--success-bg); color: var(--success); }
+    .badge.late { background: var(--danger-bg); color: var(--danger); }
+    .badge.partial { background: var(--warning-bg); color: var(--warning); }
+    .badge.due { background: #eee; color: #555; }
+
+    .progress-wrapper {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 16px; margin-bottom: 18px; box-shadow: var(--shadow);
+    }
+    .progress-bar-bg { height: 7px; background: var(--bg); border-radius: 10px; overflow: hidden; margin-top: 8px; }
+    .progress-bar-fill { height: 100%; background: var(--gold); border-radius: 10px; transition: width 0.4s; }
+
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .settings-grid { grid-template-columns: 1fr; } }
+
+    .danger-zone {
+      border: 1.5px solid #f5c6cb; background: #fff5f5; border-radius: var(--radius);
+      padding: 16px; margin-top: 20px;
+    }
+
+    .smart-preview-box {
+      background: #fcfaf4; border: 1.5px dashed var(--gold); border-radius: 10px;
+      padding: 14px; margin-top: 14px;
+    }
+    .preview-pill {
+      display: inline-flex; align-items: center; gap: 4px; background: #fff;
+      border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px;
+      font-size: 12.5px; margin: 3px 2px;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; transition: 0.15s; width: 100%;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-gold { background: var(--gold); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--ink); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:disabled { background: #e0a8a2; cursor: not-allowed; }
+    .btn-whatsapp { background: #25d366; color: #fff; text-decoration: none; border-radius: 6px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; width: auto; }
+
+    /* تنسيق النافذة المنبثقة مع عزل الحركة */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(13, 39, 31, 0.68);
+      z-index: 2000; display: flex; align-items: flex-end; justify-content: center;
+      backdrop-filter: blur(4px);
+      overscroll-behavior: contain !important;
+      touch-action: none !important;
+    }
+    @media (min-width: 600px) {
+      .modal-overlay { align-items: center; }
+      .modal { border-radius: var(--radius) !important; max-width: 480px; }
+    }
+    .modal {
+      background: #fff; width: 100%; border-radius: 20px 20px 0 0;
+      max-height: 85vh; overflow-y: auto; padding: 22px 20px calc(25px + env(safe-area-inset-bottom));
+      animation: slideSheet 0.25s ease-out;
+      touch-action: pan-y !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch;
+    }
+    @keyframes slideSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .modal-header h3 { font-size: 17px; font-weight: 700; color: var(--primary); margin: 0; }
+    .close-btn { background: none; border: none; font-size: 24px; color: var(--ink-muted); cursor: pointer; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--ink); }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 16px; outline: none; background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
+    .form-help { font-size: 11.5px; color: var(--ink-muted); margin-top: 4px; display: block; }
+
+    #toast-msg {
+      position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+      background: #1e2923; color: #fff; padding: 10px 18px; border-radius: 30px;
+      font-size: 13px; z-index: 9999; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .login-box {
+      min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+      padding: 24px 20px; background: radial-gradient(circle at center, #1c4b3d, #0d271f);
+    }
+    .login-card {
+      background: #fff; border-radius: 18px; padding: 28px 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-msg"></div>
+<div id="app"></div>
+
+<script>
+// رمز الريال السعودي المعتمد رسمياً (SVG مدمج فائق الدقة)
+const RIYAL_ICON = `
+  <svg class="riyal-sym" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7 4v16M11 4v16M15 8h-8M17 12H7M15 16h-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M15 8c2.5 0 4 1.5 4 4s-1.5 4-4 4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  </svg>
+`;
+
+const Storage = {
+  get: (k) => { try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+
+const INITIAL_DATA = {
+  settings: { 
+    fundName: "صندوق العائلة الذكي", 
+    openingBalance: 5000,
+    dueDay: 27,
+    graceDays: 5,
+    maxAdvanceMonths: 3
+  },
+  members: [
+    { id: "m1", name: "عبدالله السالم (أبو فهد)", phone: "0501112233", monthlyAmount: 300, pin: "1234", isAdmin: true, active: true },
+    { id: "m2", name: "محمد السالم", phone: "0502223344", monthlyAmount: 300, pin: "1234", isAdmin: false, active: true },
+    { id: "m3", name: "خالد السالم", phone: "0503334455", monthlyAmount: 200, pin: "1234", isAdmin: false, active: true },
+    { id: "m4", name: "سارة السالم", phone: "0504445566", monthlyAmount: 200, pin: "1234", isAdmin: false, active: true }
+  ],
+  subscriptions: [
+    { id: "s1", memberId: "m1", yearMonth: getCurrentMonth(), paid: 300, date: new Date().toISOString() }
+  ],
+  expenses: [
+    { id: "e1", desc: "صيانة مجلس واستراحة العائلة", amount: 650, cat: "صيانة", date: new Date().toISOString(), status: "approved" }
+  ]
+};
+
+let DB = Storage.get("family_fund_v2") || INITIAL_DATA;
+DB.settings.dueDay = Number(DB.settings.dueDay || 27);
+DB.settings.graceDays = Number(DB.settings.graceDays ?? 5);
+DB.settings.maxAdvanceMonths = Number(DB.settings.maxAdvanceMonths || 3);
+DB.settings.openingBalance = Number(DB.settings.openingBalance ?? 5000);
+
+let USER = Storage.get("family_fund_curr_user") || null;
+let VIEW = "dashboard";
+
+function getCurrentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function save() { Storage.set("family_fund_v2", DB); }
+
+function toast(msg) {
+  const t = document.getElementById("toast-msg");
+  t.innerText = msg;
+  t.style.display = "block";
+  setTimeout(() => { t.style.display = "none"; }, 2800);
+}
+
+// تنسيق المبالغ المالية مع إرفاق الرمز الجديد
+function fmtMoney(num) {
+  return Number(num || 0).toLocaleString('en-US') + ' ' + RIYAL_ICON;
+}
+
+function cleanArabicText(text) {
+  if (!text) return "";
+  return text
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[\u064B-\u065F]/g, "")
+    .replace(/(أبو|ابو|أم|ام|الأخ|ابن)/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function parseBankMessage(rawText) {
+  if (!rawText || !rawText.trim()) return null;
+  const text = rawText.replace(/,/g, '');
+  
+  let amount = null;
+  const amtMatch = text.match(/(?:بمبلغ|المبلغ|مبلغ|بقيمة|قيمة|لديك حوالة بمبلغ|استلمت|حوالة واردة بمبلغ|SAR|ر\.س)\s*[:]?\s*([0-9]+(?:\.[0-9]+)?)/i)
+                || text.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:ر\.س|ريال|SAR)/i);
+  if (amtMatch) amount = parseFloat(amtMatch[1]);
+
+  let matchedMember = null;
+  let highestScore = 0;
+  const cleanedFullText = cleanArabicText(text);
+
+  DB.members.forEach(member => {
+    const cleanedMemberName = cleanArabicText(member.name);
+    const words = cleanedMemberName.split(/\s+/).filter(w => w.length > 2);
+    let matches = 0;
+
+    words.forEach(word => {
+      if (cleanedFullText.includes(word)) matches += 2;
+    });
+
+    if (cleanedFullText.includes(cleanedMemberName)) matches += 5;
+
+    if (matches > highestScore && matches >= 2) {
+      highestScore = matches;
+      matchedMember = member;
+    }
+  });
+
+  let dateObj = new Date();
+  const dateMatch = text.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/) || text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  let parsedYM = getCurrentMonth();
+
+  if (dateMatch) {
+    try {
+      let y, m, d;
+      if (dateMatch[1].length === 4) { [y, m, d] = [dateMatch[1], dateMatch[2], dateMatch[3]]; }
+      else { [d, m, y] = [dateMatch[1], dateMatch[2], dateMatch[3]]; }
+      parsedYM = `${y}-${String(m).padStart(2, '0')}`;
+      dateObj = new Date(y, m - 1, d);
+    } catch(e) {}
+  }
+
+  return { amount, member: matchedMember, yearMonth: parsedYM, date: dateObj.toISOString() };
+}
+
+function getMemberStatus(memberId, ym) {
+  const member = DB.members.find(m => m.id === memberId);
+  if (!member) return { text: "غير مسجل", cls: "due", paid: 0, rem: 0 };
+  const sub = DB.subscriptions.find(s => s.memberId === memberId && s.yearMonth === ym);
+  const paid = sub ? Number(sub.paid) : 0;
+  const rem = Math.max(0, member.monthlyAmount - paid);
+
+  if (rem <= 0) return { text: "مدفوع بالكامل", cls: "paid", paid, rem: 0 };
+
+  const [y, m] = ym.split('-').map(Number);
+  const dueDay = Math.min(DB.settings.dueDay || 27, 28);
+  const dueDate = new Date(y, m - 1, dueDay);
+  const graceDate = new Date(dueDate);
+  graceDate.setDate(graceDate.getDate() + (Number(DB.settings.graceDays) || 0));
+
+  const isLate = new Date() > graceDate;
+
+  if (paid > 0) {
+    return {
+      text: isLate ? "متأخر (سداد جزئي)" : "سداد جزئي",
+      cls: isLate ? "late" : "partial",
+      paid, rem
+    };
+  }
+
+  return {
+    text: isLate ? "متأخر عن السداد" : "مستحق السداد",
+    cls: isLate ? "late" : "due",
+    paid, rem
+  };
+}
+
+function getStats() {
+  const totalIncome = DB.subscriptions.reduce((s, x) => s + (Number(x.paid) || 0), 0);
+  const totalExpenses = DB.expenses.filter(e => e.status === "approved").reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const balance = Number(DB.settings.openingBalance || 0) + totalIncome - totalExpenses;
+  
+  const curYM = getCurrentMonth();
+  const target = DB.members.filter(m => m.active).reduce((s, m) => s + m.monthlyAmount, 0);
+  const collected = DB.subscriptions.filter(s => s.yearMonth === curYM).reduce((s, x) => s + (Number(x.paid) || 0), 0);
+  const percent = target > 0 ? Math.min(100, Math.round((collected / target) * 100)) : 0;
+
+  return { totalIncome, totalExpenses, balance, target, collected, percent };
+}
+
+function renderLogin() {
+  const options = DB.members.filter(m => m.active).map(m => `
+    <option value="${m.id}">${m.name} ${m.isAdmin ? '(مدير)' : ''}</option>
+  `).join('');
+
+  document.getElementById("app").innerHTML = `
+    <div class="login-box">
+      <div class="login-card">
+        <h2 style="font-size:24px; font-weight:700; color:var(--primary);">${DB.settings.fundName}</h2>
+        <p style="font-size:13px; color:var(--ink-muted); margin: 6px 0 20px;">تسجيل الدخول السريع</p>
+        <form id="login-form">
+          <div class="form-group" style="text-align:right;">
+            <label>اختر اسمك</label>
+            <select id="login-id">${options}</select>
+          </div>
+          <div class="form-group" style="text-align:right;">
+            <label>الرمز السري</label>
+            <input type="password" id="login-pin" placeholder="••••" inputmode="numeric" required />
+            <span style="font-size:11.5px; color:#888; display:block; margin-top:4px;">الرمز السري الافتراضي: <b>1234</b></span>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top:10px;">دخول إلى الصندوق</button>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("login-form").onsubmit = (e) => {
+    e.preventDefault();
+    const id = document.getElementById("login-id").value;
+    const pin = document.getElementById("login-pin").value.trim();
+    const m = DB.members.find(x => x.id === id);
+    if (m && m.pin === pin) {
+      USER = m;
+      Storage.set("family_fund_curr_user", USER);
+      renderApp();
+    } else {
+      toast("الرمز غير صحيح! جرّب 1234");
+    }
+  };
+}
+
+function renderApp() {
+  if (!USER) { renderLogin(); return; }
+
+  document.getElementById("app").innerHTML = `
+    <header class="mobile-header">
+      <div>
+        <h1>${DB.settings.fundName}</h1>
+        <span class="subtitle">مرحباً، ${USER.name}</span>
+      </div>
+      <div class="header-actions">
+        ${USER.isAdmin ? `<button class="btn-smart-pay" onclick="openSmartPasteModal()">⚡ إشعار بنكي</button>` : ''}
+        <button class="btn-quick-pay" onclick="openPaymentModal()">+ دفعة</button>
+      </div>
+    </header>
+
+    <main class="container" id="content-slot"></main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn ${VIEW==='dashboard'?'active':''}" onclick="setTab('dashboard')">
+        <span class="icon">📊</span>
+        <span>الرئيسية</span>
+      </button>
+      <button class="nav-btn ${VIEW==='subscriptions'?'active':''}" onclick="setTab('subscriptions')">
+        <span class="icon">💳</span>
+        <span>الاشتراكات</span>
+      </button>
+      <button class="nav-btn ${VIEW==='expenses'?'active':''}" onclick="setTab('expenses')">
+        <span class="icon">💸</span>
+        <span>المصروفات</span>
+      </button>
+      ${USER.isAdmin ? `
+      <button class="nav-btn ${VIEW==='members'?'active':''}" onclick="setTab('members')">
+        <span class="icon">👥</span>
+        <span>الأعضاء</span>
+      </button>
+      <button class="nav-btn ${VIEW==='settings'?'active':''}" onclick="setTab('settings')">
+        <span class="icon">⚙️</span>
+        <span>الإعدادات</span>
+      </button>
+      ` : `
+      <button class="nav-btn" onclick="logout()">
+        <span class="icon">🚪</span>
+        <span>خروج</span>
+      </button>
+      `}
+    </nav>
+  `;
+
+  renderTabContent();
+}
+
+function setTab(tab) {
+  VIEW = tab;
+  renderApp();
+}
+
+function renderTabContent() {
+  const slot = document.getElementById("content-slot");
+  const stats = getStats();
+  const curYM = getCurrentMonth();
+
+  if (VIEW === 'dashboard') {
+    slot.innerHTML = `
+      <div class="finance-overview">
+        <div class="overview-title">الرصيد المتاح حالياً بالصندوق</div>
+        <div class="overview-balance">${fmtMoney(stats.balance)}</div>
+        <div class="overview-stats">
+          <div class="overview-stat-item">
+            <div>إجمالي المقبوضات</div>
+            <div>+ ${fmtMoney(stats.totalIncome)}</div>
+          </div>
+          <div class="overview-stat-item">
+            <div>إجمالي المصروفات</div>
+            <div>- ${fmtMoney(stats.totalExpenses)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-wrapper">
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
+          <span>تحصيل شهر (${curYM})</span>
+          <span style="color:var(--gold); font-weight:700;">${stats.percent}%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" style="width:${stats.percent}%;"></div>
+        </div>
+        <div style="font-size:11.5px; color:var(--ink-muted); margin-top:8px; display:flex; justify-content:space-between;">
+          <span>تم تحصيل: ${fmtMoney(stats.collected)}</span>
+          <span>الاستحقاق: <b>${DB.settings.dueDay} من الشهر</b> (مهلة ${DB.settings.graceDays} أيام)</span>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 18px 0 10px;">
+        <h3 style="font-size:16px; font-weight:700; color:var(--primary);">حالة أفراد العائلة هذا الشهر</h3>
+        <span style="font-size:11.5px; color:var(--ink-muted);">${DB.members.length} مشترك</span>
+      </div>
+
+      <div>
+        ${DB.members.map(m => {
+          const st = getMemberStatus(m.id, curYM);
+          const msg = encodeURIComponent(`السلام عليكم يا ${m.name}، نود تذكيركم باشتراك صندوق العائلة لشهر (${curYM}) بقيمة ${m.monthlyAmount} ريال.`);
+          return `
+            <div class="item-card">
+              <div class="card-row">
+                <span class="card-title">${m.name}</span>
+                <span class="badge ${st.cls}">${st.text}</span>
+              </div>
+              <div class="card-row" style="font-size:13px;">
+                <span class="card-sub">المطلوب: ${fmtMoney(m.monthlyAmount)}</span>
+                <span style="font-weight:700; color:${st.rem > 0 ? 'var(--danger)':'var(--success)'};">
+                  ${st.rem > 0 ? `متبقي: ${fmtMoney(st.rem)}` : `مدفوع بالكامل`}
+                </span>
+              </div>
+              ${st.rem > 0 ? `
+                <div style="margin-top:6px;">
+                  <a href="https://wa.me/${m.phone}?text=${msg}" target="_blank" class="btn btn-whatsapp">
+                    📲 تذكير واتساب سريع
+                  </a>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  else if (VIEW === 'subscriptions') {
+    slot.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:17px; font-weight:700; color:var(--primary);">سجل الاشتراكات</h3>
+        <div style="display:flex; gap:6px;">
+          ${USER.isAdmin ? `<button class="btn btn-sm btn-primary" onclick="openSmartPasteModal()">⚡ رسالة بنك</button>` : ''}
+          <button class="btn btn-gold btn-sm" onclick="openPaymentModal()">+ سداد</button>
+        </div>
+      </div>
+      <div>
+        ${DB.subscriptions.length === 0 ? '<div class="item-card" style="text-align:center; color:#888;">لا توجد مدفوعات مسجلة بعد.</div>' : ''}
+        ${DB.subscriptions.slice().reverse().map(s => {
+          const m = DB.members.find(x => x.id === s.memberId) || { name: "عضو" };
+          return `
+            <div class="item-card">
+              <div class="card-row">
+                <span class="card-title">${m.name}</span>
+                <span class="card-amount" style="color:var(--success);">+ ${fmtMoney(s.paid)}</span>
+              </div>
+              <div class="card-row card-sub">
+                <span>عن شهر: <b>${s.yearMonth}</b></span>
+                <span>تاريخ: ${new Date(s.date).toLocaleDateString('ar-SA')}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  else if (VIEW === 'expenses') {
+    slot.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:17px; font-weight:700; color:var(--primary);">المصروفات وسندات الصرف</h3>
+        <button class="btn btn-primary btn-sm" onclick="openExpenseModal()">+ إضافة مصروف</button>
+      </div>
+      <div>
+        ${DB.expenses.length === 0 ? '<div class="item-card" style="text-align:center; color:#888;">لا توجد مصروفات مسجلة بعد.</div>' : ''}
+        ${DB.expenses.slice().reverse().map(e => `
+          <div class="item-card">
+            <div class="card-row">
+              <span class="card-title">${e.desc}</span>
+              <span class="card-amount" style="color:var(--danger);">- ${fmtMoney(e.amount)}</span>
+            </div>
+            <div class="card-row card-sub">
+              <span>التصنيف: <b>${e.cat || 'عام'}</b></span>
+              <span>${new Date(e.date).toLocaleDateString('ar-SA')}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  else if (VIEW === 'members' && USER.isAdmin) {
+    slot.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:17px; font-weight:700; color:var(--primary);">أفراد الصندوق المسجلين</h3>
+        <button class="btn btn-primary btn-sm" onclick="openAddMemberModal()">+ عضو جديد</button>
+      </div>
+      <div>
+        ${DB.members.map(m => `
+          <div class="item-card">
+            <div class="card-row">
+              <span class="card-title">${m.name}</span>
+              <span class="badge ${m.isAdmin?'paid':'due'}">${m.isAdmin ? 'مدير' : 'مشترك'}</span>
+            </div>
+            <div class="card-row card-sub">
+              <span>الاشتراك: <b>${fmtMoney(m.monthlyAmount)}</b></span>
+              <span>الرمز: <code>${m.pin}</code></span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  else if (VIEW === 'settings' && USER.isAdmin) {
+    slot.innerHTML = `
+      <div class="item-card">
+        <h3 style="margin-bottom:14px; color:var(--primary); font-size:17px; font-weight:700;">⚙️ إعدادات وبيانات الصندوق</h3>
+        <div class="form-group">
+          <label>اسم الصندوق</label>
+          <input id="set-name" value="${DB.settings.fundName}" />
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>الرصيد الافتتاحي</label>
+            <input id="set-open" type="number" inputmode="numeric" value="${DB.settings.openingBalance}" />
+            <span class="form-help">رصيد البداية المالي</span>
+          </div>
+          <div class="form-group">
+            <label>يوم الاستحقاق (1 - 28)</label>
+            <input id="set-due" type="number" min="1" max="28" inputmode="numeric" value="${DB.settings.dueDay}" />
+            <span class="form-help">افتراضياً 27 من كل شهر</span>
+          </div>
+          <div class="form-group">
+            <label>مهلة التأخير (أيام)</label>
+            <input id="set-grace" type="number" min="0" max="30" inputmode="numeric" value="${DB.settings.graceDays}" />
+            <span class="form-help">أيام قبل اعتبار العضو متأخراً</span>
+          </div>
+          <div class="form-group">
+            <label>سقف الدفع المسبق (أشهر)</label>
+            <input id="set-advance" type="number" min="1" max="12" inputmode="numeric" value="${DB.settings.maxAdvanceMonths}" />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:8px;" onclick="saveSettings()">حفظ وتطبيق الإعدادات</button>
+
+        <div class="danger-zone">
+          <h4 style="color:var(--danger); margin-bottom:6px; font-size:14.5px; font-weight:700;">⚠️ منطقة العمليات الحساسة</h4>
+          <p style="font-size:12px; color:#777; margin-bottom:12px;">
+            تصفير الصندوق وحذف الأعضاء والعمليات التجريبية والبدء ببيانات عائلتك الفعلية.
+          </p>
+          <button class="btn btn-danger" onclick="openResetModal()">🗑️ تصفير الصندوق والبدء من جديد</button>
+        </div>
+
+        <hr style="margin:20px 0; border:0; border-top:1px solid var(--border);" />
+        <button class="btn btn-outline" onclick="logout()" style="color:var(--danger); border-color:var(--danger);">تسجيل الخروج</button>
+      </div>
+    `;
+  }
+}
+
+function openResetModal() {
+  showModal(`
+    <div class="modal-header">
+      <h3 style="color:var(--danger);">⚠️ تأكيد تصفير الصندوق</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <div style="text-align:right;">
+      <p style="font-size:13px; color:#555; line-height:1.6; margin-bottom:14px;">
+        سيتم حذف كافة السجلات والأعضاء التجريبيين مع الإبقاء على حسابك كمدير.
+      </p>
+      
+      <div class="form-group">
+        <label style="color:var(--danger);">لتأكيد المسح، اكتب كلمة <b>تصفير</b> أدناه:</label>
+        <input id="reset-confirm-input" placeholder="اكتب: تصفير" autocomplete="off" />
+      </div>
+
+      <button id="btn-do-reset" class="btn btn-danger" disabled onclick="executeFactoryReset()">
+        أنا متأكد، صفّر كل البيانات الآن
+      </button>
+    </div>
+  `);
+
+  const inp = document.getElementById("reset-confirm-input");
+  const btn = document.getElementById("btn-do-reset");
+  inp.addEventListener("input", () => {
+    btn.disabled = (inp.value.trim() !== "تصفير");
+  });
+}
+
+function executeFactoryReset() {
+  const cleanAdmin = {
+    id: "m_admin_root",
+    name: USER.name.includes("أبو فهد") ? "مدير الصندوق" : USER.name,
+    phone: USER.phone || "",
+    monthlyAmount: 0,
+    pin: USER.pin || "1234",
+    isAdmin: true,
+    active: true
+  };
+
+  DB = {
+    settings: {
+      fundName: DB.settings.fundName || "صندوق العائلة",
+      openingBalance: 0,
+      dueDay: 27,
+      graceDays: 5,
+      maxAdvanceMonths: 3
+    },
+    members: [cleanAdmin],
+    subscriptions: [],
+    expenses: []
+  };
+
+  USER = cleanAdmin;
+  save();
+  Storage.set("family_fund_curr_user", USER);
+  closeModal();
+  toast("تم تصفير الصندوق بنجاح!");
+  VIEW = "members";
+  renderApp();
+}
+
+function openSmartPasteModal() {
+  const options = DB.members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  showModal(`
+    <div class="modal-header">
+      <h3>⚡ استيراد دفعة من رسالة بنكية</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    
+    <div class="form-group">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+        <label style="margin:0;">الصق نص رسالة البنك هنا:</label>
+        <button type="button" class="btn btn-outline btn-sm" onclick="fillSampleSms()">رسالة تجريبية 📋</button>
+      </div>
+      <textarea id="smart-sms-input" rows="3" placeholder="مثال: حوالة واردة بمبلغ 300.00 ر.س من: محمد السالم بتاريخ 2025/05/27..."></textarea>
+    </div>
+
+    <div class="smart-preview-box" id="smart-preview" style="display:none;">
+      <h4 style="font-size:13px; font-weight:700; color:var(--primary); margin-bottom:8px;">✓ البيانات المستخرجة تلقائياً:</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px;">
+        <div class="preview-pill">المبلغ: <b id="pv-amt" style="color:var(--success);">0</b></div>
+        <div class="preview-pill">العضو المطابق: <b id="pv-mem">لم يحدد</b></div>
+        <div class="preview-pill">الشهر: <b id="pv-ym">${getCurrentMonth()}</b></div>
+      </div>
+
+      <form id="smart-confirm-form">
+        <div class="form-group">
+          <label>تأكيد العضو المستفيد</label>
+          <select id="smart-final-member">${options}</select>
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>المبلغ المستخرج</label>
+            <input type="number" id="smart-final-amt" required />
+          </div>
+          <div class="form-group">
+            <label>عن شهر</label>
+            <input type="month" id="smart-final-ym" required />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gold">✓ تأكيد وقيد الدفعة في الحساب</button>
+      </form>
+    </div>
+  `);
+
+  const textarea = document.getElementById("smart-sms-input");
+  textarea.addEventListener("input", () => {
+    runAutoParser(textarea.value);
+  });
+}
+
+function runAutoParser(text) {
+  const result = parseBankMessage(text);
+  const preview = document.getElementById("smart-preview");
+  if (!result || (!result.amount && !result.member)) {
+    preview.style.display = "none";
+    return;
+  }
+
+  preview.style.display = "block";
+  document.getElementById("pv-amt").innerHTML = result.amount ? fmtMoney(result.amount) : "غير محدد";
+  document.getElementById("pv-mem").innerText = result.member ? result.member.name : "الرجاء اختياره يدوياً";
+  document.getElementById("pv-ym").innerText = result.yearMonth;
+
+  if (result.amount) document.getElementById("smart-final-amt").value = result.amount;
+  if (result.member) document.getElementById("smart-final-member").value = result.member.id;
+  document.getElementById("smart-final-ym").value = result.yearMonth;
+
+  document.getElementById("smart-confirm-form").onsubmit = (e) => {
+    e.preventDefault();
+    const memId = document.getElementById("smart-final-member").value;
+    const amt = Number(document.getElementById("smart-final-amt").value);
+    const ym = document.getElementById("smart-final-ym").value;
+
+    DB.subscriptions.push({
+      id: "s_" + Date.now(),
+      memberId: memId,
+      yearMonth: ym,
+      paid: amt,
+      date: new Date().toISOString()
+    });
+
+    save();
+    closeModal();
+    const memObj = DB.members.find(m => m.id === memId);
+    toast(`تم قيد دفعة بنجاح لحساب ${memObj.name}`);
+    renderApp();
+  };
+}
+
+function fillSampleSms() {
+  const sample = "حوالة واردة سريعة بمبلغ 300.00 ر.س من: محمد السالم في 2025/05/27 مرجع 8492049284";
+  const t = document.getElementById("smart-sms-input");
+  t.value = sample;
+  runAutoParser(sample);
+}
+
+function openPaymentModal() {
+  const options = DB.members.map(m => `<option value="${m.id}">${m.name} (${m.monthlyAmount} ر.س)</option>`).join('');
+  showModal(`
+    <div class="modal-header">
+      <h3>سداد دفعة اشتراك</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="pay-form">
+      <div class="form-group">
+        <label>اسم العضو</label>
+        <select id="pay-mem">${options}</select>
+      </div>
+      <div class="form-group">
+        <label>عن شهر</label>
+        <input type="month" id="pay-ym" value="${getCurrentMonth()}" required />
+      </div>
+      <div class="form-group">
+        <label>المبلغ المدفوع</label>
+        <input type="number" id="pay-amt" placeholder="300" inputmode="numeric" required />
+      </div>
+      <button type="submit" class="btn btn-gold">تسجيل الدفعة الآن</button>
+    </form>
+  `);
+
+  document.getElementById("pay-form").onsubmit = (e) => {
+    e.preventDefault();
+    const id = document.getElementById("pay-mem").value;
+    const ym = document.getElementById("pay-ym").value;
+    const amt = Number(document.getElementById("pay-amt").value);
+
+    DB.subscriptions.push({
+      id: "s_" + Date.now(),
+      memberId: id,
+      yearMonth: ym,
+      paid: amt,
+      date: new Date().toISOString()
+    });
+    save();
+    closeModal();
+    toast("تم تسجيل الدفعة بنجاح");
+    renderApp();
+  };
+}
+
+function openExpenseModal() {
+  showModal(`
+    <div class="modal-header">
+      <h3>تسجيل مصروف جديد</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="exp-form">
+      <div class="form-group">
+        <label>البيان / الغرض</label>
+        <input id="exp-d" placeholder="مثال: فاتورة كهرباء، صيانة" required />
+      </div>
+      <div class="form-group">
+        <label>المبلغ</label>
+        <input type="number" id="exp-a" placeholder="مثال: 500" inputmode="numeric" required />
+      </div>
+      <div class="form-group">
+        <label>التصنيف</label>
+        <select id="exp-c">
+          <option>صيانة وترميم</option>
+          <option>مناسبات واجتماعات</option>
+          <option>تكافل ومساعدات</option>
+          <option>أخرى</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">قيد المصروف</button>
+    </form>
+  `);
+
+  document.getElementById("exp-form").onsubmit = (e) => {
+    e.preventDefault();
+    DB.expenses.push({
+      id: "e_" + Date.now(),
+      desc: document.getElementById("exp-d").value,
+      amount: Number(document.getElementById("exp-a").value),
+      cat: document.getElementById("exp-c").value,
+      date: new Date().toISOString(),
+      status: "approved"
+    });
+    save();
+    closeModal();
+    toast("تم قيد وخصم المصروف");
+    renderApp();
+  };
+}
+
+function openAddMemberModal() {
+  showModal(`
+    <div class="modal-header">
+      <h3>إضافة فرد للعائلة</h3>
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="mem-form">
+      <div class="form-group">
+        <label>الاسم الكامل</label>
+        <input id="new-name" placeholder="سلطان السالم" required />
+      </div>
+      <div class="form-group">
+        <label>رقم الجوال (للواتساب)</label>
+        <input id="new-phone" placeholder="05xxxxxxxx" type="tel" required />
+      </div>
+      <div class="form-group">
+        <label>الاشتراك الشهري</label>
+        <input id="new-amt" type="number" value="300" inputmode="numeric" required />
+      </div>
+      <button type="submit" class="btn btn-primary">حفظ العضو</button>
+    </form>
+  `);
+
+  document.getElementById("mem-form").onsubmit = (e) => {
+    e.preventDefault();
+    DB.members.push({
+      id: "m_" + Date.now(),
+      name: document.getElementById("new-name").value,
+      phone: document.getElementById("new-phone").value,
+      monthlyAmount: Number(document.getElementById("new-amt").value),
+      pin: "1234",
+      isAdmin: false,
+      active: true
+    });
+    save();
+    closeModal();
+    toast("تمت إضافة الفرد بنجاح");
+    renderApp();
+  };
+}
+
+// دالة فتح النافذة مع القفل التام لحركة الخلفية
+function showModal(content) {
+  document.body.classList.add("modal-open");
+  const div = document.createElement("div");
+  div.className = "modal-overlay";
+  div.id = "active-modal";
+  div.innerHTML = `<div class="modal">${content}</div>`;
+  
+  // إغلاق عند النقر على الخلفية المعتمة
+  div.addEventListener("click", (e) => {
+    if (e.target === div) closeModal();
+  });
+  
+  document.body.appendChild(div);
+}
+
+// دالة إغلاق النافذة وإعادة تفعيل حركة الصفحة
+function closeModal() {
+  document.body.classList.remove("modal-open");
+  const m = document.getElementById("active-modal");
+  if (m) m.remove();
+}
+
+function saveSettings() {
+  DB.settings.fundName = document.getElementById("set-name").value;
+  DB.settings.openingBalance = Number(document.getElementById("set-open").value) || 0;
+  DB.settings.dueDay = Math.min(28, Math.max(1, Number(document.getElementById("set-due").value) || 27));
+  DB.settings.graceDays = Math.max(0, Number(document.getElementById("set-grace").value) || 0);
+  DB.settings.maxAdvanceMonths = Math.max(1, Number(document.getElementById("set-advance").value) || 3);
+  
+  save();
+  toast("تم حفظ وتطبيق كافة الإعدادات بنجاح");
+  renderApp();
+}
+
+function logout() {
+  USER = null;
+  Storage.set("family_fund_curr_user", null);
+  renderLogin();
+}
+
+if (USER) renderApp();
+else renderLogin();
+</script>
+</body>
+</html>

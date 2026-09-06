@@ -12,6 +12,7 @@
 
   <!-- مكتبات Firebase السحابية للتشغيل المباشر -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <style>
@@ -247,6 +248,7 @@ const firebaseConfig = {
 
 // تهيئة Firebase
 firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 const db = firebase.firestore();
 const fundDocRef = db.collection("funds").doc("family_fund_main");
 
@@ -297,31 +299,35 @@ let USER = Storage.get("family_fund_curr_user") || null;
 let VIEW = "dashboard";
 
 // المزامنة الحية اللحظية مع Firebase Firestore
-fundDocRef.onSnapshot((doc) => {
-  if (doc.exists) {
-    DB = doc.data();
-    Storage.set("family_fund_v2", DB);
-  } else {
-    // إنشاء مستند الصندوق لأول مرة في Firebase
-    fundDocRef.set(INITIAL_DATA);
-    DB = INITIAL_DATA;
-  }
-  
-  // تحديث بيانات المستخدم الحالي إذا عُدلت
-  if (USER) {
-    const updated = DB.members.find(m => m.id === USER.id);
-    if (updated) {
-      USER = updated;
-      Storage.set("family_fund_curr_user", USER);
+// بدء المزامنة مع Firestore بعد نجاح تسجيل الدخول فقط
+function startFundSync() {
+  return fundDocRef.onSnapshot((doc) => {
+    if (doc.exists) {
+      DB = doc.data();
+      Storage.set("family_fund_v2", DB);
+    } else {
+      // إنشاء مستند الصندوق لأول مرة في Firebase
+      fundDocRef.set(INITIAL_DATA);
+      DB = INITIAL_DATA;
     }
-  }
 
-  if (USER) renderApp();
-  else renderLogin();
-}, (error) => {
-  console.error("Firebase Sync Error:", error);
-  toast("⚠️ تم العمل بالوضع المحلي (جاري إعادة الاتصال بالسحابة)");
-});
+    // تحديث بيانات المستخدم الحالي إذا عُدلت
+    if (USER) {
+      const updated = DB.members.find(m => m.id === USER.id);
+      if (updated) {
+        USER = updated;
+        Storage.set("family_fund_curr_user", USER);
+      }
+    }
+
+    if (USER) renderApp();
+    else renderLogin();
+
+  }, (error) => {
+    console.error("Firebase Sync Error:", error);
+    toast("⚠️ تعذر الاتصال ببيانات الصندوق");
+  });
+}
 
 function getCurrentMonth() {
   const d = new Date();
@@ -454,42 +460,95 @@ function getStats() {
 }
 
 function renderLogin() {
-  const options = DB.members.filter(m => m.active).map(m => `
-    <option value="${m.id}" ${m.isAdmin ? 'selected' : ''}>${m.name} ${m.isAdmin ? '👑 (المدير)' : ''}</option>
-  `).join('');
-
   document.getElementById("app").innerHTML = `
     <div class="login-box">
       <div class="login-card">
-        <h2 style="font-size:24px; font-weight:700; color:var(--primary);">${DB.settings.fundName}</h2>
-        <p style="font-size:13px; color:var(--ink-muted); margin: 6px 0 20px;">تسجيل الدخول السريع</p>
+
+        <h2 style="font-size:24px; font-weight:700; color:var(--primary);">
+          ${DB.settings.fundName}
+        </h2>
+
+        <p style="font-size:13px; color:var(--ink-muted); margin:6px 0 20px;">
+          تسجيل الدخول الآمن
+        </p>
+
         <form id="login-form">
+
           <div class="form-group" style="text-align:right;">
-            <label>اختر اسمك</label>
-            <select id="login-id">${options}</select>
+            <label>البريد الإلكتروني</label>
+            <input
+              type="email"
+              id="login-email"
+              placeholder="example@email.com"
+              autocomplete="username"
+              required
+            />
           </div>
+
           <div class="form-group" style="text-align:right;">
-            <label>الرمز السري</label>
-            <input type="password" id="login-pin" placeholder="••••" inputmode="numeric" required />
-            <span style="font-size:11.5px; color:#888; display:block; margin-top:4px;">الرمز السري الافتراضي: <b>1234</b></span>
+            <label>كلمة المرور</label>
+            <input
+              type="password"
+              id="login-password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
           </div>
-          <button type="submit" class="btn btn-primary" style="margin-top:10px;">دخول إلى الصندوق</button>
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+            style="margin-top:10px;"
+          >
+            دخول إلى الصندوق
+          </button>
+
         </form>
+
       </div>
     </div>
   `;
 
-  document.getElementById("login-form").onsubmit = (e) => {
+  document.getElementById("login-form").onsubmit = async (e) => {
     e.preventDefault();
-    const id = document.getElementById("login-id").value;
-    const pin = document.getElementById("login-pin").value.trim();
-    const m = DB.members.find(x => x.id === id);
-    if (m && m.pin === pin) {
-      USER = m;
+
+    const email =
+      document.getElementById("login-email").value.trim();
+
+    const password =
+      document.getElementById("login-password").value;
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+
+      const adminMember = DB.members.find(m => m.isAdmin);
+
+      if (!adminMember) {
+        toast("⚠️ لم يتم العثور على حساب المدير داخل بيانات الصندوق");
+        await auth.signOut();
+        return;
+      }
+
+      USER = adminMember;
       Storage.set("family_fund_curr_user", USER);
-      renderApp();
-    } else {
-      toast("الرمز غير صحيح! جرّب 1234");
+
+      if (!fundSyncUnsubscribe) {
+  fundSyncUnsubscribe = startFundSync();
+}
+
+    } catch (error) {
+      console.error("Firebase Auth Error:", error);
+
+      if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/wrong-password" ||
+        error.code === "auth/user-not-found"
+      ) {
+        toast("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+      } else {
+        toast("تعذر تسجيل الدخول");
+      }
     }
   };
 }
@@ -1069,15 +1128,55 @@ function saveSettings() {
   renderApp();
 }
 
-function logout() {
+let fundSyncUnsubscribe = null;
+
+async function logout() {
+  if (fundSyncUnsubscribe) {
+    fundSyncUnsubscribe();
+    fundSyncUnsubscribe = null;
+  }
+
   USER = null;
   Storage.set("family_fund_curr_user", null);
+
+  try {
+    await auth.signOut();
+  } catch (error) {
+    console.error("Firebase Sign Out Error:", error);
+  }
+
   renderLogin();
 }
 
-// تشغيل النظام
-if (USER) renderApp();
-else renderLogin();
+// استعادة جلسة Firebase عند فتح أو تحديث الصفحة
+auth.onAuthStateChanged((firebaseUser) => {
+  if (firebaseUser) {
+    const adminMember = DB.members.find(m => m.isAdmin);
+
+    if (!adminMember) {
+      USER = null;
+      renderLogin();
+      return;
+    }
+
+    USER = adminMember;
+    Storage.set("family_fund_curr_user", USER);
+
+    if (!fundSyncUnsubscribe) {
+      fundSyncUnsubscribe = startFundSync();
+    }
+
+  } else {
+    if (fundSyncUnsubscribe) {
+      fundSyncUnsubscribe();
+      fundSyncUnsubscribe = null;
+    }
+
+    USER = null;
+    Storage.set("family_fund_curr_user", null);
+    renderLogin();
+  }
+});
 </script>
 </body>
 </html>
